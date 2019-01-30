@@ -91,10 +91,9 @@ func TestZJoinTable_Columns(t *testing.T) {
 }
 
 func TestZColumnList_Bind(t *testing.T) {
-	var column = ZColumnList{}
 	var tst testColumnStruct
 
-	column.Bind(&tst)
+	var column = ZColumnList{}.Bind(&tst)
 
 	fmt.Println(column)
 }

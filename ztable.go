@@ -145,7 +145,7 @@ type SoftDelete interface {
 
 type ZColumnList ZMap
 
-func (column ZColumnList) Bind(obj interface{}) {
+func (column ZColumnList) Bind(obj interface{}) (*ZColumnList) {
 	var r = reflect.ValueOf(obj).Elem()
 	var numFields = r.NumField()
 
@@ -154,6 +154,7 @@ func (column ZColumnList) Bind(obj interface{}) {
 			column.Append(fk, reflect.Zero(r.Field(i).Type()).Interface())
 		}
 	}
+	return &column
 }
 
 func (column ZColumnList) makeRow() (*zRow) {
@@ -180,8 +181,9 @@ func (column ZColumnList) makeRows() (*zRows) {
 	return rows
 }
 
-func (column ZColumnList) Append(key string, value interface{}) {
+func (column ZColumnList) Append(key string, value interface{}) (*ZColumnList) {
 	column[key] = value
+	return &column
 }
 
 type zScanner interface {

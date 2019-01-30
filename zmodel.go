@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
-	"fmt"
 )
 
 type AssignList map[string]interface{}
@@ -292,18 +291,15 @@ func (model *zModel) Count() (int64, error) {
 	var row = ZColumnList{"count(1) as total": int64(0)}.makeRow()
 	query,args,err := syntax.query(row.columns...)
 	if err != nil {
-		fmt.Println(err.Error())
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
-	sqlRow,terr := model.queryRow(query, args...)
-	if terr != nil {
-		fmt.Println(terr)
-		return 0, &zModelErr{query:query, args:args, err:err}
+	sqlRow,err := model.queryRow(query, args...)
+	if err != nil {
+		return 0, err
 	}
 
 	if err = row.fill(sqlRow); err != nil {
-		fmt.Println(err)
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
@@ -314,7 +310,7 @@ func (model *zModel) Count() (int64, error) {
 	return 0, &zModelErr{query:query, args:args, err:errors.New("result parse error")}
 }
 
-func (model *zModel) exec(query string, args ...interface{}) (sql.Result, *zModelErr) {
+func (model *zModel) exec(query string, args ...interface{}) (sql.Result, error) {
 	defer model.logQuery(query, args...)
 
 	result,err := RawExec(query, args...)
@@ -325,7 +321,7 @@ func (model *zModel) exec(query string, args ...interface{}) (sql.Result, *zMode
 	return result,nil
 }
 
-func (model *zModel) queryRows(query string, args ...interface{}) (*sql.Rows, *zModelErr) {
+func (model *zModel) queryRows(query string, args ...interface{}) (*sql.Rows, error) {
 	defer model.logQuery(query, args...)
 
 	rows,err := RawQuery(query, args...)
@@ -336,7 +332,7 @@ func (model *zModel) queryRows(query string, args ...interface{}) (*sql.Rows, *z
 	return rows,nil
 }
 
-func (model *zModel) queryRow(query string, args ...interface{}) (*sql.Row, *zModelErr) {
+func (model *zModel) queryRow(query string, args ...interface{}) (*sql.Row, error) {
 	defer model.logQuery(query, args...)
 
 	row,err := RawQueryRow(query, args...)

@@ -70,6 +70,14 @@ func (test *zTestSoftDelete) DeleteValue() interface{} {
 	return time.Now().Format("2006-01-02 00:00:00")
 }
 
+type testColumnStruct struct {
+	Id 			int64 		`column:"id"`
+	Name 		string 		`column:"name"`
+	Address 	string 		`column:"address"`
+	Contact 	string 		`column:"contact"`
+	Email 		string 		`column:"email"`
+}
+
 func TestZJoinTable_Columns(t *testing.T) {
 	var joinTable = new(ZJoinTable)
 	joinTable.TableReference = new(zTestTable2)
@@ -80,4 +88,13 @@ func TestZJoinTable_Columns(t *testing.T) {
 
 	fmt.Println(joinTable.Table())
 	fmt.Println(joinTable.tableArgs())
+}
+
+func TestZColumnList_Bind(t *testing.T) {
+	var column = ZColumnList{}
+	var tst testColumnStruct
+
+	column.Bind(&tst)
+
+	fmt.Println(column)
 }

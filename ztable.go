@@ -145,6 +145,17 @@ type SoftDelete interface {
 
 type ZColumnList ZMap
 
+func (column ZColumnList) Bind(obj interface{}) {
+	var r = reflect.ValueOf(obj).Elem()
+	var numFields = r.NumField()
+
+	for i := 0; i < numFields; i++ {
+		if fk,ok := r.Type().Field(i).Tag.Lookup("column"); ok {
+			column.Append(fk, reflect.Zero(r.Field(i).Type()).Interface())
+		}
+	}
+}
+
 func (column ZColumnList) makeRow() (*zRow) {
 	var row = new(zRow)
 	row.columns = make([]string, 0)

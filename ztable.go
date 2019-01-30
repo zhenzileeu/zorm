@@ -169,6 +169,10 @@ func (column ZColumnList) makeRows() (*zRows) {
 	return rows
 }
 
+func (column ZColumnList) Append(key string, value interface{}) {
+	column[key] = value
+}
+
 type zScanner interface {
 	//
 	Scan(dest ...interface{}) error

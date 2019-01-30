@@ -15,14 +15,19 @@ func (list AssignList) Bind(obj interface{}) (*AssignList) {
 
 	for i := 0; i < numFields; i++ {
 		if fk,ok := r.Type().Field(i).Tag.Lookup("zcolumn"); ok {
-			list.Append(fk, reflect.Zero(r.Field(i).Type()).Interface())
+			list.Assign(fk, reflect.Zero(r.Field(i).Type()).Interface())
 		}
 	}
 	return &list
 }
 
-func (list AssignList) Append(column string, value interface{}) (*AssignList) {
+func (list AssignList) Assign(column string, value interface{}) (*AssignList) {
 	list[column] = value
+	return &list
+}
+
+func (list AssignList) Delete(column string) (*AssignList) {
+	delete(list, column)
 	return &list
 }
 

@@ -150,7 +150,7 @@ func (column ZColumnList) Bind(obj interface{}) (*ZColumnList) {
 	var numFields = r.NumField()
 
 	for i := 0; i < numFields; i++ {
-		if fk,ok := r.Type().Field(i).Tag.Lookup("column"); ok {
+		if fk,ok := r.Type().Field(i).Tag.Lookup("zcolumn"); ok {
 			column.Append(fk, reflect.Zero(r.Field(i).Type()).Interface())
 		}
 	}
@@ -245,7 +245,7 @@ func (row *zRow) Bind(obj interface{}) (error) {
 		numFields := r.NumField()
 		for i := 0; i < numFields; i++ {
 			field := r.Type().Field(i)
-			if column,ok := field.Tag.Lookup("column"); ok {
+			if column,ok := field.Tag.Lookup("zcolumn"); ok {
 				if v, ok := row.filledMap[column]; ok {
 					r.Field(i).Set(reflect.ValueOf(v))
 				}

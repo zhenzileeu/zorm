@@ -4,9 +4,27 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
+	"reflect"
 )
 
 type AssignList map[string]interface{}
+
+func (list AssignList) Bind(obj interface{}) (*AssignList) {
+	var r = reflect.ValueOf(obj).Elem()
+	var numFields = r.NumField()
+
+	for i := 0; i < numFields; i++ {
+		if fk,ok := r.Type().Field(i).Tag.Lookup("zcolumn"); ok {
+			list.Append(fk, reflect.Zero(r.Field(i).Type()).Interface())
+		}
+	}
+	return &list
+}
+
+func (list AssignList) Append(column string, value interface{}) (*AssignList) {
+	list[column] = value
+	return &list
+}
 
 type zModel struct {
 	table 		ZTable
@@ -171,10 +189,10 @@ func (model *zModel) FindMany(id []int64, column *ZColumnList) (*zRows, *zModelE
 	return rows, nil
 }
 
-func (model *zModel) Insert(list AssignList) (id int64, err *zModelErr) {
+func (model *zModel) Insert(list *AssignList) (id int64, err *zModelErr) {
 	var syntax = new(zInsert)
 	syntax.table = model.table
-	syntax.assigns = list
+	syntax.assigns = *list
 
 	query,args,serr := syntax.query()
 	if serr != nil {
@@ -194,10 +212,10 @@ func (model *zModel) Insert(list AssignList) (id int64, err *zModelErr) {
 	return id,nil
 }
 
-func (model *zModel) Update(list AssignList) (rowsAffected int64, err *zModelErr) {
+func (model *zModel) Update(list *AssignList) (rowsAffected int64, err *zModelErr) {
 	var syntax = new(zUpdate)
 	syntax.table = model.table
-	syntax.assigns = list
+	syntax.assigns = *list
 
 	if model.query != nil {
 		syntax.where = model.query.where
@@ -237,7 +255,7 @@ func (model *zModel) Delete() (rowsAffected int64, err *zModelErr) {
 	}
 
 	var softDelete = model.table.SoftDelete()
-	return model.Update(AssignList{softDelete.Column(): softDelete.DeleteValue()})
+	return model.Update(&AssignList{softDelete.Column(): softDelete.DeleteValue()})
 }
 
 func (model *zModel) ForceDelete() (rowsAffected int64, err *zModelErr) {

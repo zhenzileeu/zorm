@@ -299,7 +299,7 @@ func (model *zModel) Count() (int64, error) {
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
-	if err := row.fill(sqlRow); err != nil {
+	if err = row.fill(sqlRow); err != nil {
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 

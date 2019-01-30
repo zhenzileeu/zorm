@@ -8,19 +8,16 @@ import (
 
 type AssignList map[string]interface{}
 
-func NewZModel(table ZTable, sqlLogger zSqlLogger) (*zModel) {
-	var model = new(zModel)
-	model.table = table
-	model.sqlLogger = sqlLogger
-
-	return model
-}
-
 type zModel struct {
 	table 		ZTable
 	query 		*zQueryBuilder
+	connection 	*sql.DB
 
 	sqlLogger 	zSqlLogger
+}
+
+func (model *zModel) connect(connection *sql.DB) {
+	model.connection = connection
 }
 
 func (model *zModel) NewQuery() (*zQueryBuilder) {
@@ -313,7 +310,7 @@ func (model *zModel) Count() (total int64, err *zModelErr) {
 func (model *zModel) exec(query string, args ...interface{}) (sql.Result, *zModelErr) {
 	defer model.logQuery(query, args...)
 
-	result,err := RawExec(query, args...)
+	result,err := RawExec(model.connection, query, args...)
 	if err != nil {
 		return result,&zModelErr{query:query, args:args, err:err}
 	}
@@ -324,7 +321,7 @@ func (model *zModel) exec(query string, args ...interface{}) (sql.Result, *zMode
 func (model *zModel) queryRows(query string, args ...interface{}) (*sql.Rows, *zModelErr) {
 	defer model.logQuery(query, args...)
 
-	rows,err := RawQuery(query, args...)
+	rows,err := RawQuery(model.connection, query, args...)
 	if err != nil {
 		return nil, &zModelErr{query:query, args:args, err: err}
 	}
@@ -335,7 +332,7 @@ func (model *zModel) queryRows(query string, args ...interface{}) (*sql.Rows, *z
 func (model *zModel) queryRow(query string, args ...interface{}) (*sql.Row, *zModelErr) {
 	defer model.logQuery(query, args...)
 
-	row,err := RawQueryRow(query, args...)
+	row,err := RawQueryRow(model.connection, query, args...)
 	if err != nil {
 		return nil, &zModelErr{query:query, args:args, err:err}
 	}

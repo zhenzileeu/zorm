@@ -38,7 +38,7 @@ func JoinUsing(column ...string) (*zJoinUsing) {
 	return joinUsing
 }
 
-func RawExec(query string, args ...interface{}) (sql.Result, error) {
+func RawExec(connection *sql.DB, query string, args ...interface{}) (sql.Result, error) {
 	if connection == nil {
 		return nil, errors.New("no db connection")
 	}
@@ -46,7 +46,7 @@ func RawExec(query string, args ...interface{}) (sql.Result, error) {
 	return connection.Exec(query, args...)
 }
 
-func RawQuery(query string, args ...interface{}) (*sql.Rows, error) {
+func RawQuery(connection *sql.DB, query string, args ...interface{}) (*sql.Rows, error) {
 	if connection == nil {
 		return nil, errors.New("no db connection")
 	}
@@ -54,7 +54,7 @@ func RawQuery(query string, args ...interface{}) (*sql.Rows, error) {
 	return connection.Query(query, args...)
 }
 
-func RawQueryRow(query string, args ...interface{}) (*sql.Row, error) {
+func RawQueryRow(connection *sql.DB, query string, args ...interface{}) (*sql.Row, error) {
 	if connection == nil {
 		return nil, errors.New("no db connection")
 	}

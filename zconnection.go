@@ -4,30 +4,75 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/pkg/errors"
 )
 
-var connection 	*sql.DB = nil
+type ZConnection struct {
+	connection *sql.DB
+	transaction *sql.Tx
+}
 
 // OpenConnection defines a DB connection used in orm model
-func Open(con ZConnectionCfg) (error)  {
-	connection,err := sql.Open("mysql",
+func (connection *ZConnection) Open(con ZConnectionCfg) (*ZConnection, error)  {
+	var err error
+	connection.connection,err = sql.Open("mysql",
 		fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&timeout=%ds&readTimeout=%ds&writeTimeout=%ds",
 			con.UserName, con.Password, con.Host, con.Port,con.DbName, con.TimeoutSec, con.ReadTimeoutSec, con.WriteTimeoutSec))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	connection.SetMaxIdleConns(con.MaxIdle)
-	connection.SetMaxOpenConns(con.MaxOpen)
+	connection.connection.SetMaxIdleConns(con.MaxIdle)
+	connection.connection.SetMaxOpenConns(con.MaxOpen)
 
-	return nil
+	return connection, nil
 }
 
-// Begin starts a transaction
-func Begin() (*sql.Tx, error) {
-	return connection.Begin()
+// Close closes the database and prevents new queries from starting.
+func (connection *ZConnection) Close() (error) {
+	if connection.connection == nil {
+		return errors.New("no connection")
+	}
+
+	return connection.connection.Close()
 }
 
+// Begin starts a transaction. The default isolation level is dependent on
+// the driver.
+func (connection *ZConnection) Begin() (err error) {
+	if connection.connection == nil {
+		return errors.New("model has no db connection defined")
+	}
+
+	connection.transaction, err = connection.connection.Begin()
+	return
+}
+
+func (connection *ZConnection) Rollback() (error) {
+	if connection.transaction == nil {
+		return errors.New("no transaction")
+	}
+
+	return connection.transaction.Rollback()
+}
+
+func (connection *ZConnection) Commit() (error) {
+	if connection.transaction == nil {
+		return errors.New("no transaction")
+	}
+
+	return connection.transaction.Commit()
+}
+
+// NewModel gives an z-model with current db connection
+func (connection *ZConnection) NewModel(table ZTable, sqlLogger zSqlLogger) (*zModel) {
+	var model = new(zModel)
+	model.table = table
+	model.sqlLogger = sqlLogger
+	model.connect(connection.connection)
+
+	return model
+}
 
 type ZConnectionCfg struct {
 	UserName 		string		`json:"user_name"`

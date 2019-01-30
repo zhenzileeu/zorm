@@ -3,7 +3,6 @@ package zorm
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-	"fmt"
 	"github.com/pkg/errors"
 )
 

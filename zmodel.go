@@ -298,12 +298,12 @@ func (model *zModel) Count() (int64, error) {
 
 	sqlRow,err := model.queryRow(query, args...)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err)
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
 	if err = row.fill(sqlRow); err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err)
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 

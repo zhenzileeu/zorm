@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
+	"fmt"
 )
 
 type AssignList map[string]interface{}
@@ -291,15 +292,18 @@ func (model *zModel) Count() (int64, error) {
 	var row = ZColumnList{"count(1) as total": int64(0)}.makeRow()
 	query,args,err := syntax.query(row.columns...)
 	if err != nil {
+		fmt.Println(err.Error())
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
 	sqlRow,err := model.queryRow(query, args...)
 	if err != nil {
+		fmt.Println(err.Error())
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
 	if err = row.fill(sqlRow); err != nil {
+		fmt.Println(err.Error())
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 

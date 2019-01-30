@@ -288,7 +288,7 @@ func (model *zModel) Count() (int64, error) {
 		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
 	}
 
-	var row = ZColumnList{"count(1) as total": int64(0)}.makeRow()
+	var row = ZColumnList{"coun(1) as total": int64(0)}.makeRow()
 	query,args,err := syntax.query(row.columns...)
 	if err != nil {
 		return 0, &zModelErr{query:query, args:args, err:err}

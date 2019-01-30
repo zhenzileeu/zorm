@@ -236,6 +236,13 @@ func (model *zModel) Update(list *AssignList) (rowsAffected int64, err *zModelEr
 		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
 	}
 
+	if syntax.assigns != nil {
+		if id, ok := syntax.assigns[model.table.PrimaryKey()]; ok {
+			where := new(zWhere).Where(model.table.PrimaryKey(), "=", id)
+			syntax.where = where.AndWhere(syntax.where)
+		}
+	}
+
 	query,args,serr := syntax.query()
 	if serr != nil {
 		return 0, &zModelErr{query:query, args:args, err:serr}

@@ -15,7 +15,7 @@ func (list AssignList) Bind(obj interface{}) (*AssignList) {
 
 	for i := 0; i < numFields; i++ {
 		if fk,ok := r.Type().Field(i).Tag.Lookup("zcolumn"); ok {
-			list.Assign(fk, reflect.Zero(r.Field(i).Type()).Interface())
+			list.Assign(fk, r.Field(i).Interface())
 		}
 	}
 	return &list

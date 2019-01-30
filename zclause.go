@@ -49,6 +49,10 @@ type zWhere struct {
 }
 
 func (where *zWhere) Raw(query string, args ...interface{}) (*zWhere) {
+	if query == "" {
+		return where
+	}
+
 	if where.cond == nil {
 		where.cond = make([]zWhereCond, 0)
 	}
@@ -63,6 +67,10 @@ func (where *zWhere) Raw(query string, args ...interface{}) (*zWhere) {
 }
 
 func (where *zWhere) Like(column,pattern string) (*zWhere) {
+	if column == "" {
+		return where
+	}
+
 	if where.cond == nil {
 		where.cond = make([]zWhereCond, 0)
 	}
@@ -77,6 +85,10 @@ func (where *zWhere) Like(column,pattern string) (*zWhere) {
 }
 
 func (where *zWhere) In(column string, value ...interface{}) (*zWhere) {
+	if column=="" || value==nil || len(value)==0 {
+		return where
+	}
+
 	if where.cond == nil {
 		where.cond = make([]zWhereCond, 0)
 	}
@@ -91,6 +103,10 @@ func (where *zWhere) In(column string, value ...interface{}) (*zWhere) {
 }
 
 func (where *zWhere) Between(column string, v1, v2 interface{}) (*zWhere) {
+	if column=="" || v1==nil || v2==nil {
+		return where
+	}
+
 	if where.cond == nil {
 		where.cond = make([]zWhereCond, 0)
 	}
@@ -105,6 +121,10 @@ func (where *zWhere) Between(column string, v1, v2 interface{}) (*zWhere) {
 }
 
 func (where *zWhere) Where(column,operation string, value interface{}) (*zWhere) {
+	if column == "" || value==nil {
+		return where
+	}
+
 	if where.cond == nil {
 		where.cond = make([]zWhereCond, 0)
 	}
@@ -119,6 +139,10 @@ func (where *zWhere) Where(column,operation string, value interface{}) (*zWhere)
 }
 
 func (where *zWhere) AndWhere(cond *zWhere) (*zWhere) {
+	if cond == nil {
+		return where
+	}
+
 	if where.cond == nil {
 		where.cond = make([]zWhereCond, 0)
 	}
@@ -132,6 +156,10 @@ func (where *zWhere) AndWhere(cond *zWhere) (*zWhere) {
 }
 
 func (where *zWhere) OrWhere(cond *zWhere) (*zWhere) {
+	if cond == nil {
+		return where
+	}
+
 	if where.cond == nil {
 		where.cond = make([]zWhereCond, 0)
 	}
@@ -170,6 +198,10 @@ type zOrderBy struct {
 }
 
 func (orderby *zOrderBy) OrderBy(column,sort string) (*zOrderBy) {
+	if column == "" {
+		return orderby
+	}
+
 	if orderby.columns == nil {
 		orderby.columns = make([]string, 0)
 	}
@@ -232,6 +264,10 @@ type zGroupBy struct {
 }
 
 func (groupby *zGroupBy) GroupBy(column ...string) (*zGroupBy) {
+	if column==nil || len(column)==0 {
+		return groupby
+	}
+
 	if groupby.columns == nil {
 		groupby.columns = make([]string, 0)
 	}

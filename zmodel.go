@@ -7,7 +7,7 @@ import (
 
 type AssignList map[string]interface{}
 
-func NewTableQuery(table ZTable, sqlLogger zSqlLogger) (*zModel) {
+func NewZModel(table ZTable, sqlLogger zSqlLogger) (*zModel) {
 	var model = new(zModel)
 	model.table = table
 	model.sqlLogger = sqlLogger
@@ -17,45 +17,34 @@ func NewTableQuery(table ZTable, sqlLogger zSqlLogger) (*zModel) {
 
 type zModel struct {
 	table 		ZTable
-	where 		*zWhere
-	orderBy 	*zOrderBy
-	groupBy 	*zGroupBy
-	limit 		*zLimit
+	query 		*zQueryBuilder
 
 	sqlLogger 	zSqlLogger
 }
 
-func (model *zModel) Where(where *zWhere) (*zModel) {
-	model.where = where
-	return model
-}
-
-func (model *zModel) OrderBy(orderBy *zOrderBy) (*zModel) {
-	model.orderBy = orderBy
-	return model
-}
-
-func (model *zModel) GroupBy(groupBy *zGroupBy) (*zModel) {
-	model.groupBy = groupBy
-	return model
-}
-
-func (model *zModel) Limit(limit *zLimit) (*zModel) {
-	model.limit = limit
-	return model
+func (model *zModel) NewQuery() (*zQueryBuilder) {
+	model.query = new(zQueryBuilder)
+	return model.query
 }
 
 func (model *zModel) Get(column ZColumnList) (*zRows, error) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
-	syntax.groupby = model.groupBy
-	syntax.orderby = model.orderBy
-	syntax.limit = model.limit
+
+	if model.query != nil {
+		syntax.groupby = model.query.groupBy
+		syntax.orderby = model.query.orderBy
+		syntax.limit = model.query.limit
+		syntax.where = model.query.where
+	} else {
+		syntax.groupby = nil
+		syntax.orderby = nil
+		syntax.limit = nil
+		syntax.where = nil
+	}
 
 	if model.table.SoftDelete() != nil {
-		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(model.where)
-	} else {
-		syntax.where = model.where
+		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
 	}
 
 	var rows = column.makeRows()
@@ -79,14 +68,19 @@ func (model *zModel) Get(column ZColumnList) (*zRows, error) {
 func (model *zModel) First(column ZColumnList) (*zRow, error) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
-	syntax.groupby = model.groupBy
-	syntax.orderby = model.orderBy
-	syntax.limit = model.limit
+
+	if model.query != nil {
+		syntax.groupby = model.query.groupBy
+		syntax.limit = model.query.limit
+		syntax.where = model.query.where
+	} else {
+		syntax.groupby = nil
+		syntax.limit = nil
+		syntax.where = nil
+	}
 
 	if model.table.SoftDelete() != nil {
-		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(model.where)
-	} else {
-		syntax.where = model.where
+		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
 	}
 
 	var row = column.makeRow()
@@ -194,9 +188,20 @@ func (model *zModel) Update(list AssignList) (rowsAffected int64, err error) {
 	var syntax = new(zUpdate)
 	syntax.table = model.table
 	syntax.assigns = list
-	syntax.where = model.where
-	syntax.orderBy = model.orderBy
-	syntax.limit = model.limit
+
+	if model.query != nil {
+		syntax.where = model.query.where
+		syntax.orderBy = model.query.orderBy
+		syntax.limit = model.query.limit
+	} else {
+		syntax.where = nil
+		syntax.orderBy = nil
+		syntax.limit = nil
+	}
+
+	if model.table.SoftDelete() != nil {
+		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
+	}
 
 	query,args,err := syntax.query()
 	if err != nil {
@@ -228,9 +233,16 @@ func (model *zModel) Delete() (rowsAffected int64, err error) {
 func (model *zModel) ForceDelete() (rowsAffected int64, err error) {
 	var syntax = new(zDelete)
 	syntax.table = model.table
-	syntax.where = model.where
-	syntax.orderBy = model.orderBy
-	syntax.limit = model.limit
+
+	if model.query != nil {
+		syntax.where = model.query.where
+		syntax.orderBy = model.query.orderBy
+		syntax.limit = model.query.limit
+	} else {
+		syntax.where = nil
+		syntax.orderBy = nil
+		syntax.limit = nil
+	}
 
 	query,args,err := syntax.query()
 	if err != nil {
@@ -253,10 +265,14 @@ func (model *zModel) ForceDelete() (rowsAffected int64, err error) {
 func (model *zModel) Count() (int64) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
-	if model.table.SoftDelete() != nil {
-		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(model.where)
+	if model.query != nil {
+		syntax.where = model.query.where
 	} else {
-		syntax.where = model.where
+		syntax.where = nil
+	}
+
+	if model.table.SoftDelete() != nil {
+		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
 	}
 
 	var row = ZColumnList{"count(1) as total": int64(0)}.makeRow()

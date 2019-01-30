@@ -29,18 +29,3 @@ func TestWhereIn(t *testing.T) {
 	var where = WhereIn("c1", "d", "ddd", "DDDDD")
 	fmt.Println(where.build())
 }
-
-func TestLimit(t *testing.T) {
-	var limit = Limit(100, 8)
-	fmt.Println(limit.build())
-}
-
-func TestGroupBy(t *testing.T) {
-	var groupby = GroupBy("c1", "c2", "c3").Having(WhereColumn("c1", ">", 10))
-	fmt.Println(groupby.build())
-}
-
-func TestOrderBy(t *testing.T) {
-	var orderBy = OrderBy("c1", "ASC").OrderBy("c2", "desc")
-	fmt.Println(orderBy.build())
-}

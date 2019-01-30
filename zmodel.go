@@ -296,9 +296,9 @@ func (model *zModel) Count() (int64, error) {
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
-	sqlRow,err := model.queryRow(query, args...)
-	if err != nil {
-		fmt.Println(err)
+	sqlRow,terr := model.queryRow(query, args...)
+	if terr != nil {
+		fmt.Println(terr)
 		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 

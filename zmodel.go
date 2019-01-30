@@ -3,6 +3,8 @@ package zorm
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"fmt"
+	"github.com/pkg/errors"
 )
 
 type AssignList map[string]interface{}
@@ -274,7 +276,7 @@ func (model *zModel) ForceDelete() (rowsAffected int64, err error) {
 	return rowsAffected,err
 }
 
-func (model *zModel) Count() (int64) {
+func (model *zModel) Count() (int64, error) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 	if model.query != nil {
@@ -290,23 +292,23 @@ func (model *zModel) Count() (int64) {
 	var row = ZColumnList{"count(1) as total": int64(0)}.makeRow()
 	query,args,err := syntax.query(row.columns...)
 	if err != nil {
-		return 0
+		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
 	sqlRow,err := model.queryRow(query, args...)
 	if err != nil {
-		return 0
+		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
 	if err := row.fill(sqlRow); err != nil {
-		return 0
+		return 0, &zModelErr{query:query, args:args, err:err}
 	}
 
 	if v, ok := row.Get("total"); ok {
-		return v.(int64)
+		return v.(int64), nil
 	}
 
-	return 0
+	return 0, &zModelErr{query:query, args:args, err:errors.New("result parse error")}
 }
 
 func (model *zModel) exec(query string, args ...interface{}) (sql.Result, *zModelErr) {

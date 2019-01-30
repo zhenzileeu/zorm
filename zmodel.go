@@ -356,7 +356,7 @@ type zModelErr struct {
 }
 
 func (err *zModelErr) Error() string {
-	return err.Error()
+	return err.err.Error()
 }
 
 func (err *zModelErr) Query() string {

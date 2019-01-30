@@ -28,7 +28,7 @@ func (model *zModel) NewQuery() (*zQueryBuilder) {
 	return model.query
 }
 
-func (model *zModel) Get(column *ZColumnList) (*zRows, error) {
+func (model *zModel) Get(column *ZColumnList) (*zRows, *zModelErr) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 
@@ -57,9 +57,9 @@ func (model *zModel) Get(column *ZColumnList) (*zRows, error) {
 		return nil, &zModelErr{query:query, args:args, err:err}
 	}
 
-	sqlRows,err := model.queryRows(query, args...)
-	if err != nil {
-		return nil, &zModelErr{query:query, args:args, err:err}
+	sqlRows,qerr := model.queryRows(query, args...)
+	if qerr != nil {
+		return nil, qerr
 	}
 
 	if err := rows.fill(sqlRows); err!=nil {
@@ -69,7 +69,7 @@ func (model *zModel) Get(column *ZColumnList) (*zRows, error) {
 	return rows, nil
 }
 
-func (model *zModel) First(column *ZColumnList) (*zRow, error) {
+func (model *zModel) First(column *ZColumnList) (*zRow, *zModelErr) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 
@@ -96,9 +96,9 @@ func (model *zModel) First(column *ZColumnList) (*zRow, error) {
 		return nil, &zModelErr{query:query, args:args, err:err}
 	}
 
-	sqlRow,err := model.queryRow(query, args...)
-	if err != nil {
-		return nil, err
+	sqlRow,qerr := model.queryRow(query, args...)
+	if qerr != nil {
+		return nil, qerr
 	}
 
 	if err := row.fill(sqlRow); err != nil {
@@ -108,7 +108,7 @@ func (model *zModel) First(column *ZColumnList) (*zRow, error) {
 	return row,nil
 }
 
-func (model *zModel) Find(id int64, column *ZColumnList) (*zRow, error) {
+func (model *zModel) Find(id int64, column *ZColumnList) (*zRow, *zModelErr) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 	syntax.where = new(zWhere).Where(model.table.PrimaryKey(), "=", id)
@@ -126,9 +126,9 @@ func (model *zModel) Find(id int64, column *ZColumnList) (*zRow, error) {
 		return nil, &zModelErr{query:query, args:args, err:err}
 	}
 
-	sqlRow,err := model.queryRow(query, args...)
-	if err != nil {
-		return nil, err
+	sqlRow,qerr := model.queryRow(query, args...)
+	if qerr != nil {
+		return nil, qerr
 	}
 
 	if err := row.fill(sqlRow); err != nil {
@@ -138,7 +138,7 @@ func (model *zModel) Find(id int64, column *ZColumnList) (*zRow, error) {
 	return row, nil
 }
 
-func (model *zModel) FindMany(id []int64, column *ZColumnList) (*zRows, error) {
+func (model *zModel) FindMany(id []int64, column *ZColumnList) (*zRows, *zModelErr) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 
@@ -162,9 +162,9 @@ func (model *zModel) FindMany(id []int64, column *ZColumnList) (*zRows, error) {
 		return nil,&zModelErr{query:query, args:args, err:err}
 	}
 
-	sqlRows,err := model.queryRows(query, args...)
-	if err != nil {
-		return nil, &zModelErr{query:query, args:args, err:err}
+	sqlRows,qerr := model.queryRows(query, args...)
+	if qerr != nil {
+		return nil, qerr
 	}
 
 	if err := rows.fill(sqlRows); err != nil {
@@ -174,14 +174,14 @@ func (model *zModel) FindMany(id []int64, column *ZColumnList) (*zRows, error) {
 	return rows, nil
 }
 
-func (model *zModel) Insert(list AssignList) (id int64, err error) {
+func (model *zModel) Insert(list AssignList) (id int64, err *zModelErr) {
 	var syntax = new(zInsert)
 	syntax.table = model.table
 	syntax.assigns = list
 
-	query,args,err := syntax.query()
-	if err != nil {
-		return 0, &zModelErr{query:query, args:args, err:err}
+	query,args,serr := syntax.query()
+	if serr != nil {
+		return 0, &zModelErr{query:query, args:args, err:serr}
 	}
 
 	result,err := model.exec(query, args...)
@@ -189,15 +189,15 @@ func (model *zModel) Insert(list AssignList) (id int64, err error) {
 		return 0, err
 	}
 
-	id, err = result.LastInsertId()
-	if err != nil {
-		return id, &zModelErr{query:query, args:args, err:err}
+	id, serr = result.LastInsertId()
+	if serr != nil {
+		return id, &zModelErr{query:query, args:args, err:serr}
 	}
 
 	return id,nil
 }
 
-func (model *zModel) Update(list AssignList) (rowsAffected int64, err error) {
+func (model *zModel) Update(list AssignList) (rowsAffected int64, err *zModelErr) {
 	var syntax = new(zUpdate)
 	syntax.table = model.table
 	syntax.assigns = list
@@ -216,9 +216,9 @@ func (model *zModel) Update(list AssignList) (rowsAffected int64, err error) {
 		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
 	}
 
-	query,args,err := syntax.query()
-	if err != nil {
-		return 0, &zModelErr{query:query, args:args, err:err}
+	query,args,serr := syntax.query()
+	if serr != nil {
+		return 0, &zModelErr{query:query, args:args, err:serr}
 	}
 
 	result,err := model.exec(query, args...)
@@ -226,15 +226,15 @@ func (model *zModel) Update(list AssignList) (rowsAffected int64, err error) {
 		return 0, err
 	}
 
-	rowsAffected,err = result.RowsAffected()
-	if err != nil {
-		return rowsAffected, &zModelErr{query:query, args:args, err:err}
+	rowsAffected,serr = result.RowsAffected()
+	if serr != nil {
+		return rowsAffected, &zModelErr{query:query, args:args, err:serr}
 	}
 
 	return rowsAffected, nil
 }
 
-func (model *zModel) Delete() (rowsAffected int64, err error) {
+func (model *zModel) Delete() (rowsAffected int64, err *zModelErr) {
 	if model.table.SoftDelete() == nil {
 		return model.ForceDelete()
 	}
@@ -243,7 +243,7 @@ func (model *zModel) Delete() (rowsAffected int64, err error) {
 	return model.Update(AssignList{softDelete.Column(): softDelete.DeleteValue()})
 }
 
-func (model *zModel) ForceDelete() (rowsAffected int64, err error) {
+func (model *zModel) ForceDelete() (rowsAffected int64, err *zModelErr) {
 	var syntax = new(zDelete)
 	syntax.table = model.table
 
@@ -257,9 +257,9 @@ func (model *zModel) ForceDelete() (rowsAffected int64, err error) {
 		syntax.limit = nil
 	}
 
-	query,args,err := syntax.query()
-	if err != nil {
-		return 0, &zModelErr{query:query, args:args, err:err}
+	query,args,serr := syntax.query()
+	if serr != nil {
+		return 0, &zModelErr{query:query, args:args, err:serr}
 	}
 
 	result,err := model.exec(query, args...)
@@ -267,15 +267,15 @@ func (model *zModel) ForceDelete() (rowsAffected int64, err error) {
 		return 0, err
 	}
 
-	rowsAffected,err = result.RowsAffected()
-	if err != nil {
-		return rowsAffected, &zModelErr{query:query, args:args, err:err}
+	rowsAffected,serr = result.RowsAffected()
+	if serr != nil {
+		return rowsAffected, &zModelErr{query:query, args:args, err:serr}
 	}
 
 	return rowsAffected,err
 }
 
-func (model *zModel) Count() (int64, error) {
+func (model *zModel) Count() (total int64, err *zModelErr) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 	if model.query != nil {
@@ -289,9 +289,9 @@ func (model *zModel) Count() (int64, error) {
 	}
 
 	var row = ZColumnList{"coun(1) as total": int64(0)}.makeRow()
-	query,args,err := syntax.query(row.columns...)
-	if err != nil {
-		return 0, &zModelErr{query:query, args:args, err:err}
+	query,args,serr := syntax.query(row.columns...)
+	if serr != nil {
+		return 0, &zModelErr{query:query, args:args, err:serr}
 	}
 
 	sqlRow,err := model.queryRow(query, args...)
@@ -299,8 +299,8 @@ func (model *zModel) Count() (int64, error) {
 		return 0, err
 	}
 
-	if err = row.fill(sqlRow); err != nil {
-		return 0, &zModelErr{query:query, args:args, err:err}
+	if serr = row.fill(sqlRow); serr != nil {
+		return 0, &zModelErr{query:query, args:args, err:serr}
 	}
 
 	if v, ok := row.Get("total"); ok {
@@ -310,7 +310,7 @@ func (model *zModel) Count() (int64, error) {
 	return 0, &zModelErr{query:query, args:args, err:errors.New("result parse error")}
 }
 
-func (model *zModel) exec(query string, args ...interface{}) (sql.Result, error) {
+func (model *zModel) exec(query string, args ...interface{}) (sql.Result, *zModelErr) {
 	defer model.logQuery(query, args...)
 
 	result,err := RawExec(query, args...)
@@ -321,7 +321,7 @@ func (model *zModel) exec(query string, args ...interface{}) (sql.Result, error)
 	return result,nil
 }
 
-func (model *zModel) queryRows(query string, args ...interface{}) (*sql.Rows, error) {
+func (model *zModel) queryRows(query string, args ...interface{}) (*sql.Rows, *zModelErr) {
 	defer model.logQuery(query, args...)
 
 	rows,err := RawQuery(query, args...)
@@ -332,7 +332,7 @@ func (model *zModel) queryRows(query string, args ...interface{}) (*sql.Rows, er
 	return rows,nil
 }
 
-func (model *zModel) queryRow(query string, args ...interface{}) (*sql.Row, error) {
+func (model *zModel) queryRow(query string, args ...interface{}) (*sql.Row, *zModelErr) {
 	defer model.logQuery(query, args...)
 
 	row,err := RawQueryRow(query, args...)

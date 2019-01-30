@@ -27,7 +27,7 @@ func (model *zModel) NewQuery() (*zQueryBuilder) {
 	return model.query
 }
 
-func (model *zModel) Get(column ZColumnList) (*zRows, error) {
+func (model *zModel) Get(column *ZColumnList) (*zRows, error) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 
@@ -47,6 +47,9 @@ func (model *zModel) Get(column ZColumnList) (*zRows, error) {
 		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
 	}
 
+	if column == nil {
+		column = model.table.Columns()
+	}
 	var rows = column.makeRows()
 	query,args,err := syntax.query(rows.columns...)
 	if err != nil {
@@ -65,7 +68,7 @@ func (model *zModel) Get(column ZColumnList) (*zRows, error) {
 	return rows, nil
 }
 
-func (model *zModel) First(column ZColumnList) (*zRow, error) {
+func (model *zModel) First(column *ZColumnList) (*zRow, error) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 
@@ -83,6 +86,9 @@ func (model *zModel) First(column ZColumnList) (*zRow, error) {
 		syntax.where = new(zWhere).Where(model.table.SoftDelete().Column(), "=", model.table.SoftDelete().Value()).AndWhere(syntax.where)
 	}
 
+	if column == nil {
+		column = model.table.Columns()
+	}
 	var row = column.makeRow()
 	query,args,err := syntax.query(row.columns...)
 	if err != nil {
@@ -101,7 +107,7 @@ func (model *zModel) First(column ZColumnList) (*zRow, error) {
 	return row,nil
 }
 
-func (model *zModel) Find(id int64, column ZColumnList) (*zRow, error) {
+func (model *zModel) Find(id int64, column *ZColumnList) (*zRow, error) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 	syntax.where = new(zWhere).Where(model.table.PrimaryKey(), "=", id)
@@ -110,6 +116,9 @@ func (model *zModel) Find(id int64, column ZColumnList) (*zRow, error) {
 	}
 	syntax.limit = new(zLimit).Limit(1).Offset(0)
 
+	if column == nil {
+		column = model.table.Columns()
+	}
 	var row = column.makeRow()
 	query,args,err := syntax.query(row.columns...)
 	if err != nil {
@@ -128,7 +137,7 @@ func (model *zModel) Find(id int64, column ZColumnList) (*zRow, error) {
 	return row, nil
 }
 
-func (model *zModel) FindMany(id []int64, column ZColumnList) (*zRows, error) {
+func (model *zModel) FindMany(id []int64, column *ZColumnList) (*zRows, error) {
 	var syntax = new(zSelect)
 	syntax.table = model.table
 
@@ -143,6 +152,9 @@ func (model *zModel) FindMany(id []int64, column ZColumnList) (*zRows, error) {
 	syntax.orderby = new(zOrderBy).OrderBy(model.table.PrimaryKey(), "ASC")
 	syntax.limit = new(zLimit).Limit(int64(len(primaryIds))).Offset(0)
 
+	if column == nil {
+		column = model.table.Columns()
+	}
 	var rows = column.makeRows()
 	query,args,err := syntax.query(rows.columns...)
 	if err != nil {

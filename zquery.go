@@ -6,18 +6,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var connection 	*sql.DB = nil
-
-// OpenConnection defines a DB connection used in orm model
-func OpenConnection(conn *sql.DB)  {
-	connection = conn
-}
-
-// Begin starts a transaction
-func Begin() (*sql.Tx, error) {
-	return connection.Begin()
-}
-
 func WhereColumn(column, operation string, value interface{}) (*zWhere) {
 	return new(zWhere).Where(column, operation, value)
 }
